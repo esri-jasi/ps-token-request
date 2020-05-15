@@ -1,0 +1,22 @@
+PS>
+
+$c = Get-Credential
+
+# 1. portal authentication:
+# -------------------------
+$portal = 'https://myportal.mydomain.tld'
+$uri = $portal+'/portal/sharing/rest/generateToken?f=json'
+$postparams = 'username='+$c.Username+'&password='+$c.GetNetworkCredential().Password+'&expiration=60&referer='+$portal
+$responseContent = (Invoke-WebRequest -uri $uri -Method POST -body $postparams).content
+$x = $responseContent | ConvertFrom-Json
+$portalToken = $x.Token
+
+# 2. Sample Request
+# -----------------
+$service='/server/rest/services/folder/service/MapServer'
+$uri = $portal+$service+'/0/query?where=1%3D1&returnCountOnly=true&f=json'
+$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+$headers.Add('Accept','Application/Json')
+$headers.Add('X-Esri-Authorization','Bearer '+$portalToken)
+$result = Invoke-WebRequest -Uri $uri -Headers $headers
+$result
